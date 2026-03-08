@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gerador SENSBILIDADE</title>
+<style>
+:root{
+  --bg:#060608;
+  --accent:#AF00FF;
+  --accent2:#AF00FF;
+  --white:#ff00ff;
+  --red:#ff4f4f;
+}
+
+body{
+  margin:0;
+  font-family:Arial;
+  background:var(--bg);
+  color:white;
+  overflow:hidden;
+}
+
+canvas{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  z-index:0;
+}
+
+.container{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  z-index:1;
+  position:relative;
+}
+
+.box{
+  background:rgba(7,7,17,0.6);
+  padding:30px;
+  border-radius:15px;
+  width:360px;
+  box-shadow:0 0 30px #000;
+  backdrop-filter: blur(10px);
+}
+
+h2{
+  text-align:center;
+  color:var(--accent);
+}
+
+select,button{
+  width:100%;
+  padding:12px;
+  margin-top:8px;
+  margin-bottom:12px;
+  border-radius:8px;
+  border:none;
+}
+
+button{
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  color:white;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+.result{
+  background:rgba(0,0,0,0.5);
+  padding:15px;
+  border-radius:10px;
+}
+
+/* suporte */
+.support{
+  position:fixed;
+  bottom:90px;
+  right:30px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  cursor:pointer;
+  z-index:999;
+}
+.support-icon{
+  font-size:28px;
+}
+.online-dot{
+  width:10px;
+  height:10px;
+  background:#00ff5e;
+  border-radius:50%;
+  position:absolute;
+  right:6px;
+  top:4px;
+}
+.support-text{
+  font-size:12px;
+  margin-top:4px;
+  color:white;
+}
+
+/* chat */
+.chat-box{
+  position:fixed;
+  bottom:150px;
+  right:40px;
+  width:320px;
+  background:#111;
+  border-radius:15px;
+  display:none;
+  flex-direction:column;
+  overflow:hidden;
+  z-index:999;
+  box-shadow:0 0 15px rgba(0,0,0,0.6);
+}
+
+.chat-header{
+  background:#1b1b1b;
+  padding:10px;
+  font-weight:bold;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  border-bottom:1px solid rgba(255,255,255,0.1);
+}
+
+.verify{
+  color:#1da1f2;
+}
+
+.chat-messages{
+  height:260px;
+  overflow-y:auto;
+  padding:10px;
+  font-size:14px;
+}
+
+.bot{
+  color:var(--accent);
+  margin-bottom:8px;
+}
+
+.user{
+  text-align:right;
+  margin-bottom:8px;
+  color:white;
+}
+
+.option{
+  background:#222;
+  padding:8px;
+  border-radius:6px;
+  margin-top:6px;
+  text-align:center;
+  cursor:pointer;
+  color:white;
+  font-weight:bold;
+  transition:0.2s;
+}
+.option:hover{
+  background:var(--accent);
+}
+
+.chat-input{
+  display:flex;
+  border-top:1px solid rgba(255,255,255,0.1);
+}
+.chat-input input{
+  flex:1;
+  padding:10px;
+  border:none;
+  background:#1b1b1b;
+  color:white;
+  outline:none;
+}
+.chat-input button{
+  width:70px;
+  background:var(--accent);
+  border:none;
+  color:white;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+/* notificações */
+.notification-container{
+  position:fixed;
+  top:20px;
+  right:20px;
+  z-index:999;
+}
+
+.notification{
+  background:#111;
+  border-radius:10px;
+  padding:7px 10px;
+  margin-bottom:10px;
+  font-size:14px;
+  box-shadow:0 0 10px rgba(0,0,0,0.5);
+  opacity:0;
+  transform:translateX(100%);
+  transition: all 0.5s ease;
+  display:flex;
+  flex-direction:column;
+}
+
+.notification.show{
+  opacity:1;
+  transform:translateX(0);
+}
+
+.notification-name{
+  font-weight:bold;
+  color:var(--accent);
+}
+
+.notification-action{
+  color:white;
+  margin-top:9px;
+}
+
+.notification-bar{
+  height:5px;
+  background:var(--accent);
+  border-radius:2px;
+  margin-top:6px;
+  animation:discharge 3s linear forwards;
+}
+
+@keyframes discharge{
+  from{width:100%;}
+  to{width:0;}
+}
+
+/* mensagem cupom central */
+.cupom-message{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  background:#111;
+  padding:15px 20px;
+  border-radius:12px;
+  text-align:center;
+  color:white;
+  font-weight:bold;
+  box-shadow:0 0 15px rgba(0,0,0,0.7);
+  z-index:1000;
+}
+.cupom-message button{
+  margin-top:10px;
+  padding:8px 15px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  background:var(--accent);
+  color:white;
+  font-weight:bold;
+}
+</style>
+</head>
+<body>
+
+<canvas id="particles"></canvas>
+
+<div class="container">
+<div class="box">
+<h2>GERADOR DE SENSBILIDADE</h2>
+
+<select id="marca">
+<option>CELULAR📱</option>
+<option>Samsung</option>
+<option>LG</option>
+<option>Xiaomi</option>
+<option>IPHONE</option>
+<option>Motorola</option>
+</select>
+
+<select id="jogo">
+<option>JOGO🎮</option>
+<option>Free Fire NORMAL</option>
+<option>Free Fire GLOBAL</option>
+<option>Free Fire MAX</option>
+</select>
+
+<select id="tipo">
+<option>SENSBILIDADE🎯</option>
+<option>Sensibilidade Alta</option>
+<option>Sensibilidade Baixa</option>
+</select>
+
+<select id="famoso">
+<option>FAMOSO👿</option>
+<option>Fantasma</option>
+<option>Zullu</option>
+<option>Marechal</option>
+<option>onext</option>
+<option>Bak</option>
+<option>Niel2x</option>
+<option>level up</option>
+<option>Two9</option>
+<option>Sidx</option>
+<option>Black444</option>
+<option>Nobru</option>
+<option>freitas ff</option>
+<option>Ldzin</option>
+<option>Six9</option>
+</select>
+
+<button onclick="gerar()">GERAR CONFIGURAÇÃO</button>
+
+<div class="result" id="resultado">
+O conteúdo gerado surgirá aqui…
+</div>
+</div>
+</div>
+
+<!-- suporte -->
+<div class="support" onclick="toggleChat()">
+  <div style="position:relative">
+    <div class="support-icon">👩‍💻</div>
+    <div class="online-dot"></div>
+  </div>
+  <div class="support-text">Suporte Online</div>
+</div>
+
+<!-- chat -->
+<div class="chat-box" id="chatBox">
+  <div class="chat-header">
+    BOT SUPORTE <span class="verify">👩‍💻</span>
+  </div>
+  <div class="chat-messages" id="chatMessages">
+    <div class="bot">Olá 👋<br>
+      Tudo bem? Escolha uma opção do painel abaixo:
+      <div class="option" onclick="painel('Holograma')">Painel Holograma</div>
+      <div class="option" onclick="painel('Auxilio')">Painel Auxílio</div>
+      <div class="option" onclick="painel('Sensibilidade')">Gerador de Sensibilidade</div>
+    </div>
+  </div>
+  <div class="chat-input">
+    <input id="chatInput" placeholder="Digite aqui...">
+    <button onclick="responder()">Enviar</button>
+  </div>
+</div>
+
+<div class="notification-container" id="notificationContainer"></div>
+
+<script>
+/* GERADOR */
+function gerar(){
+  // Mensagem central cupom
+  const cupomDiv = document.createElement("div");
+  cupomDiv.className = "cupom-message";
+  cupomDiv.innerHTML = `✅ Cupom resgatado!<br>Fale com suporte para resgatá-lo<br><button onclick="this.parentElement.remove()">OK</button>`;
+  document.body.appendChild(cupomDiv);
+
+  const resultado = document.getElementById("resultado");
+  resultado.innerHTML = "";
+  const mensagensSistema = ["Verificando sistema...", "Autenticando...", "Gerando sensibilidade..."];
+  let i = 0;
+
+  function mostrarMensagem(){
+    if(i < mensagensSistema.length){
+      resultado.innerHTML = `<span style="color:#00ff5e;font-weight:bold">${mensagensSistema[i]}</span>`;
+      i++;
+      setTimeout(mostrarMensagem, 1000);
+    } else {
+      const tipo=document.getElementById("tipo").value;
+      const geral = tipo.includes("Alta") ? 130 + Math.floor(Math.random()*71) : 70 + Math.floor(Math.random()*41);
+      const famoso = document.getElementById("famoso").value;
+      resultado.innerHTML = `🎮 <span style="color:#8f56ff">${famoso}</span><br>
+      Geral: ${geral}<br>
+      Red Dot: ${geral-5}<br>
+      Mira 2x: ${geral-10}<br>
+      Mira 4x: ${geral-15}<br>
+      AWM: ${geral-20}`;
+    }
+  }
+  mostrarMensagem();
+}
+
+/* chat */
+function toggleChat(){
+  let chat=document.getElementById("chatBox")
+  chat.style.display=chat.style.display=="flex"?"none":"flex"
+}
+
+function responder(){
+  let input=document.getElementById("chatInput")
+  let msg=input.value.trim()
+  if(msg=="") return
+  let chat=document.getElementById("chatMessages")
+  chat.innerHTML+=`<div class="user">${msg}</div>`
+  input.value=""
+
+  function enviarBot(text, delay=1000){
+    const botMsg = document.createElement("div");
+    botMsg.className="bot";
+    botMsg.innerHTML="Botsup digitando...";
+    chat.appendChild(botMsg);
+    chat.scrollTop=chat.scrollHeight;
+    setTimeout(()=>{
+      botMsg.innerHTML=text;
+      chat.scrollTop=chat.scrollHeight;
+    },delay);
+  }
+
+  const lower=msg.toLowerCase();
+  if(lower.includes("oi") || lower.includes("olá")){
+    enviarBot(`Oi! Tudo bem? Escolha uma opção do painel abaixo:<br>
+      <div class="option" onclick="painel('Holograma')">Painel Holograma</div>
+      <div class="option" onclick="painel('Auxilio')">Painel Auxílio</div>
+      <div class="option" onclick="painel('Sensibilidade')">Gerador de Sensibilidade</div>`);
+  } else if(lower.includes("painel holograma")){
+    painel('Holograma');
+  } else if(lower.includes("painel auxílio") || lower.includes("painel auxilio")){
+    painel('Auxilio');
+  } else if(lower.includes("sensibilidade")){
+    painel('Sensibilidade');
+  } else {
+    enviarBot("❌ Só posso ajudar com o painel, sensibilidade ou auxílio.");
+  }
+}
+
+/* painel */
+function painel(tipo){
+  const chat=document.getElementById("chatMessages");
+  function enviar(text){
+    const botMsg=document.createElement("div");
+    botMsg.className="bot";
+    botMsg.innerHTML="Botsup digitando...";
+    chat.appendChild(botMsg);
+    chat.scrollTop=chat.scrollHeight;
+    setTimeout(()=>{
+      botMsg.innerHTML=text;
+      chat.scrollTop=chat.scrollHeight;
+    },600);
+  }
+
+  if(tipo=="Holograma"){
+    enviar(`
+    <div style="color:var(--accent);font-weight:bold;">Painel Holograma</div>
+    <div style="color:white;font-weight:bold;">Informações do painel:</div>
+    <div>
+      🩸100% Antblack e antban<br>
+      🩸Bypass 100% analista nunca vai achar<br>
+      🩸Painel 100% configurável<br>
+      🩸Holograma rosa e vermelho<br>
+      🩸Ver através da parede de gelo<br>
+      📁+10 packs diferentes
+    </div>
+    <div style="color:white;font-weight:bold;">Opções do mod:</div>
+    <div>
+      ✅ Esp rosa e vermelha<br>
+      ✅ Auxilio RAGE, no recoil, precisão<br>
+      ✅ Auxílio legit aim stabilizer
+    </div>
+    <div style="color:white;font-weight:bold;">Vem junto:</div>
+    <div>
+      🔑 Chave exclusiva<br>
+      📑 Tutorial instalação
+    </div>
+    <div class="option" onclick="cupom()">Ativar Cupom</div>`);
+  } else if(tipo=="Auxilio"){
+    enviar(`
+    <div style="color:var(--accent);font-weight:bold;">Painel Auxílio</div>
+    <div style="color:white;font-weight:bold;">Informações do painel:</div>
+    <div>
+    
+      🩸 100% Antblack / Antban<br>
+      🩸 Bypass 100% seguro<br>
+      🩸 Painel 100% configurável<br>
+      🩸 OPS NO-RECOIL<br>
+      📁+ De 7Pack, painéis e otimização Android<br>
+      📁 +10 packs diferentes
+    </div>
+    <div class="option" onclick="cupom()">Ativar Cupom</div>`);
+  } else if(tipo=="Sensibilidade"){
+    enviar(`Gere sua melhor sensibilidade no menu acima.`);
+  }
+}
+
+/* cupom */
+function cupom(){
+  const chat=document.getElementById("chatMessages");
+  const verificando=document.createElement("div");
+  verificando.className="bot";
+  verificando.innerHTML="Botsup digitando...";
+  chat.appendChild(verificando);
+  chat.scrollTop=chat.scrollHeight;
+
+  setTimeout(()=>{
+    verificando.innerHTML=`<span style="color:#00ff5e">Cupom ativado com sucesso ✅</span><br>Redirecionando...`;
+    chat.scrollTop=chat.scrollHeight;
+    setTimeout(()=>{
+      const recebe=document.createElement("div");
+      recebe.className="bot";
+      recebe.innerHTML=`<span style="color:var(--accent)">📦 Onde eu recebo meu produto</span><br>
+        <span style="color:white">Você receberá automaticamente:</span><br>
+        • seu e-mail cadastrado<br>
+        • sua conta na LastLink`;
+      chat.appendChild(recebe);
+      chat.scrollTop=chat.scrollHeight;
+      setTimeout(()=>{
+        window.location.href="https://lastlink.com/p/C30D65EFD/checkout-payment";
+      },3000);
+    },0);
+  },2000);
+}
+
+/* notificações */
+const nomes = [
+  "Lucasxit","GabrielBR","RafaGames","Anazinha","PedroPlay",
+  "CarolFF","Joãozinho","Luan01","Maria_FF","CaioYT",
+  "BiaGamer","ViniX","DudaFF","IgorPlay"
+];
+const acoes = ["resgatou o cupom","pegou o painel holograma","pegou o painel auxílio"];
+function gerarNotificacoes(){
+  const container = document.getElementById("notificationContainer");
+  function novaNotificacao(){
+    container.innerHTML = "";
+    let indices = [];
+    while(indices.length < 2){
+      let i = Math.floor(Math.random()*nomes.length);
+      if(!indices.includes(i)) indices.push(i);
+    }
+    indices.forEach((i,idx)=>{
+      const nome = nomes[i];
+      const acao = acoes[Math.floor(Math.random()*acoes.length)];
+      const notif = document.createElement("div");
+      notif.className="notification show";
+      notif.innerHTML = `<div class="notification-name">${nome} ✅</div>
+                         <div class="notification-action">${acao}</div>
+                         <div class="notification-bar"></div>`;
+      notif.style.top = `${idx*70}px`;
+      container.appendChild(notif);
+      setTimeout(()=>{notif.classList.remove("show")},3000);
+    });
+  }
+  novaNotificacao();
+  setInterval(novaNotificacao,3500);
+}
+
+/* partículas */
+const canvas=document.getElementById("particles");
+const ctx=canvas.getContext("2d");
+canvas.width=window.innerWidth;
+canvas.height=window.innerHeight;
+let particles=[];
+for(let i=0;i<100;i++){
+  particles.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,vx:(Math.random()-0.5)/2,vy:(Math.random()-0.5)/2});
+}
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  particles.forEach(p=>{
+    p.x+=p.vx; p.y+=p.vy;
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,2,0,Math.PI*2);
+    ctx.fillStyle="rgba(143,86,255,0.7)";
+    ctx.fill();
+    particles.forEach(p2=>{
+      let dx=p.x-p2.x, dy=p.y-p2.y, dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<120){
+        ctx.beginPath();
+        ctx.moveTo(p.x,p.y);
+        ctx.lineTo(p2.x,p2.y);
+        ctx.strokeStyle="rgba(143,86,255,0.2)";
+        ctx.stroke();
+      }
+    });
+  });
+  requestAnimationFrame(draw);
+}
+draw();
+gerarNotificacoes();
+</script>
+</body>
+</html>
